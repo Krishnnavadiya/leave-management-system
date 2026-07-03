@@ -1,0 +1,275 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Employee Leave Management System API",
+    "version": "1.0.0",
+    "description": "Production-ready enterprise API for Employee Leave Management"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "summary": "Employee Login",
+        "description": "Authenticates user and returns access & refresh tokens",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "example": "employee1@example.com" },
+                  "password": { "type": "string", "example": "Password123" }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login successful" },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "summary": "Employee Logout",
+        "description": "Invalidates refresh token and clears active session cookies",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refreshToken": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Logout successful" }
+        }
+      }
+    },
+    "/api/auth/refresh-token": {
+      "post": {
+        "summary": "Rotate Access Token",
+        "description": "Obtain new access token using a valid refresh token",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refreshToken": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Token refreshed successfully" },
+          "401": { "description": "Invalid or expired token" }
+        }
+      }
+    },
+    "/api/employees/profile": {
+      "get": {
+        "summary": "Get Logged In Employee Profile",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Profile details returned successfully" }
+        }
+      }
+    },
+    "/api/employees": {
+      "get": {
+        "summary": "List Employees Directory",
+        "description": "Allowed for MANAGER role only. Supports search and pagination.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "search", "in": "query", "schema": { "type": "string" } },
+          { "name": "department", "in": "query", "schema": { "type": "string" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "List returned" },
+          "403": { "description": "Forbidden access" }
+        }
+      }
+    },
+    "/api/leaves": {
+      "post": {
+        "summary": "Submit Leave Request",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "leaveType": { "type": "string", "enum": ["ANNUAL", "SICK", "CASUAL", "MATERNITY", "PATERNITY", "UNPAID"] },
+                  "startDate": { "type": "string", "format": "date", "example": "2026-07-10" },
+                  "endDate": { "type": "string", "format": "date", "example": "2026-07-15" },
+                  "reason": { "type": "string", "example": "Vacation with family" }
+                },
+                "required": ["leaveType", "startDate", "endDate", "reason"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Request submitted successfully" }
+        }
+      },
+      "get": {
+        "summary": "List My Leave History",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string" } },
+          { "name": "leaveType", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "History returned" }
+        }
+      }
+    },
+    "/api/leaves/{id}": {
+      "get": {
+        "summary": "Get Leave Request Details",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Details returned" }
+        }
+      },
+      "put": {
+        "summary": "Update Pending Leave Request",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "leaveType": { "type": "string" },
+                  "startDate": { "type": "string" },
+                  "endDate": { "type": "string" },
+                  "reason": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Updated successfully" }
+        }
+      },
+      "delete": {
+        "summary": "Delete Pending Leave Request",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Deleted successfully" }
+        }
+      }
+    },
+    "/api/leaves/{id}/cancel": {
+      "put": {
+        "summary": "Cancel Leave Request",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Leave cancelled" }
+        }
+      }
+    },
+    "/api/manager/pending-leaves": {
+      "get": {
+        "summary": "List Pending Leaves for Approvals",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Pending requests list" }
+        }
+      }
+    },
+    "/api/manager/leaves/{id}/approve": {
+      "put": {
+        "summary": "Approve Leave Request",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "comment": { "type": "string", "example": "Approved, cover task handed over." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Leave approved" }
+        }
+      }
+    },
+    "/api/manager/leaves/{id}/reject": {
+      "put": {
+        "summary": "Reject Leave Request",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "comment": { "type": "string", "example": "Rejected due to release schedules." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Leave rejected" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

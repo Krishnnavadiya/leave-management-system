@@ -1,0 +1,71 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../backend/node_modules/.prisma/client"
+}
+
+model Employee {
+  id           String         @id @default(uuid())
+  name         String
+  email        String         @unique
+  password     String
+  department   String
+  role         String         @default("EMPLOYEE")
+  leaveBalance Int            @default(30)
+  leaves       Leave[]
+  refreshTokens RefreshToken[]
+  auditLogs    AuditLog[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([email])
+  @@index([department])
+}
+
+model Leave {
+  id             String      @id @default(uuid())
+  employeeId     String
+  employee       Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveType      String
+  startDate      DateTime
+  endDate        DateTime
+  totalDays      Int
+  reason         String
+  status         String      @default("PENDING")
+  managerComment String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([employeeId])
+  @@index([status])
+  @@index([startDate, endDate])
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  token      String   @unique
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([token])
+  @@index([employeeId])
+}
+
+model AuditLog {
+  id         String    @id @default(uuid())
+  action     String
+  details    String
+  employeeId String?
+  employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now())
+
+  @@index([employeeId])
+  @@index([action])
+  @@index([createdAt])
+}
