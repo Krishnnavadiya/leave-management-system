@@ -46,7 +46,7 @@ export class AuthService {
         id: employee.id,
         name: employee.name,
         email: employee.email,
-        role: employee.role,
+        role: employee.role as Role,
         department: employee.department,
         leaveBalance: employee.leaveBalance,
       },
